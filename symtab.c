@@ -8,4 +8,4 @@ typedef struct symbol_table_entry{
     char name[50];
     char type[50];
     char value[100];
-}
+};

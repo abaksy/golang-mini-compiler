@@ -1,5 +1,4 @@
 // Golang Program to create Pyramid
-
 package main
 
 import "fmt"
