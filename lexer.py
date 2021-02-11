@@ -91,23 +91,13 @@ def find_column(input, token):
     line_start = input.rfind('\n', 0, token.lexpos) + 1
     return (token.lexpos - line_start) + 1
 
-def t_STR_LIT(t):
-    r'"([^"\\]|\\.)*"'
-    return t
-
-def t_ID(t):
-    r'[a-zA-Z_]([a-zA-Z0-9_])*'
-    t.type = reserved.get(t.value, 'ID')
-    return t
-
 def t_FLOAT_LIT(t):
-    r'([+-]?[0-9]+)?\.[0-9]*([e|E]?[+-]?[0-9]+)?'
-    #r'\d+[.]\d+'
+    r'(\+|-)?(?=\d*[.eE])([0-9]+\.?[0-9]*|\.[0-9]+)([eE](\+|-)?[0-9]+)?'
     try:
         t.value = float(t.value)
     except:
+        print("Error in specifying float literal, you entered: ", t.value)
         t.value = 0.0
-        print("Error in specifying float literal")
     return t
 
 def t_INT_LIT(t):
@@ -117,6 +107,15 @@ def t_INT_LIT(t):
     except:
         t.value = 0
         print("Error in specifying integer literal")
+    return t
+
+def t_STR_LIT(t):
+    r'["]([^"\\\n]|\\.|\\\n)*["]'
+    return t
+
+def t_ID(t):
+    r'[a-zA-Z_]([a-zA-Z0-9_])*'
+    t.type = reserved.get(t.value, 'ID')
     return t
 
 t_ignore = ' \t'
