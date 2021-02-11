@@ -4,7 +4,7 @@ import sys
 tokens = ['ID', 'INT_LIT', 'FLOAT_LIT', 'STR_LIT', 'COMMENT',         #Literals and Identifiers
             'PLUS', 'MINUS', 'MUL', 'DIV', 'MOD',           #Arithmetic
             'GT', 'LT', 'GE', 'LE', 'EQEQ', 'NEQ',          #Relational
-            'BAND', 'BOR', 'BXOR', 'LSHIFT', 'RSHIFT',      #Bitwise
+            'BAND', 'BOR', 'BXOR', 'BNOT', 'LSHIFT', 'RSHIFT',      #Bitwise
             'LAND', 'LOR',                                  #Logical
             'INCR', 'DECR', 'NOT',                           #Unary
             'EQ', 'PLUS_EQ', 'MIN_EQ', 'MUL_EQ', 'DIV_EQ', 'MOD_EQ', 'LSHIFT_EQ', 'RSHIFT_EQ', 'BAND_EQ', 'BOR_EQ', 'BXOR_EQ',  #Assignment
@@ -65,6 +65,7 @@ t_LT = r'<'
 t_BAND = r'&'
 t_BOR = r'\|'
 t_BXOR = r'\^'
+t_BNOT = r'~'
 t_NOT = r'!'
 t_EQ = r'='
 
@@ -131,4 +132,20 @@ if __name__=="__main__":
     while tok is not None:
         print(tok)
         tok = lexer.token()
+
+precedence = (
+    ('left', 'COMMA'),
+    ('right', 'EQ', 'PLUS_EQ', 'MIN_EQ', 'MUL_EQ', 'DIV_EQ', 'MOD_EQ', 'LSHIFT_EQ', 'RSHIFT_EQ', 'BAND_EQ', 'BOR_EQ', 'BXOR_EQ'),
+    ('left', 'LOR'),
+    ('left', 'LAND'),
+    ('left', 'BOR'),
+    ('left', 'BXOR'),
+    ('left', 'BAND'),
+    ('left', 'EQEQ', 'NEQ'),
+    ('left', 'GT', 'LT', 'GE', 'LE'),
+    ('left', 'LSHIFT', 'RSHIFT'),
+    ('left', 'PLUS', 'MINUS'),
+    ('left', 'MUL', 'DIV', 'MOD'),
+    ('right', 'INCR', 'DECR', 'NOT', 'BNOT'),
+)
     
