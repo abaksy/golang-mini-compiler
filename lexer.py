@@ -83,8 +83,6 @@ t_COMMA = r'\,'
 t_SCOLON = r';'
 t_COLON = r':'
 
-
-
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
@@ -103,7 +101,8 @@ def t_ID(t):
     return t
 
 def t_FLOAT_LIT(t):
-    r'\d+[.]\d+'
+    r'([+-]?[0-9]+)?\.[0-9]*([e|E]?[+-]?[0-9]+)?'
+    #r'\d+[.]\d+'
     try:
         t.value = float(t.value)
     except:
@@ -120,9 +119,6 @@ def t_INT_LIT(t):
         print("Error in specifying integer literal")
     return t
 
-
-
-
 t_ignore = ' \t'
 
 def t_error(t):
@@ -131,13 +127,16 @@ def t_error(t):
 
 if __name__=="__main__":
     lexer = lex.lex()
-    with open(sys.argv[1]) as f:
-        text = f.read()
-    lexer.input(text)
-    tok = lexer.token()
-    while tok is not None:
-        print(tok)
+    if len(sys.argv) > 2:
+        with open(sys.argv[1]) as f:
+            text = f.read()
+        lexer.input(text)
         tok = lexer.token()
+        while tok is not None:
+            print(tok)
+            tok = lexer.token()
+    else:
+        lex.runmain()
 
 precedence = (
     ('left', 'COMMA'),
