@@ -34,6 +34,8 @@ reserved = {
 
 tokens += list(reserved.values())
 
+t_ignore_COMMENT=r'//.*'
+
 t_GE = r'>='
 t_LE = r'<='
 t_EQEQ = r'=='
@@ -82,6 +84,7 @@ t_SCOLON = r';'
 t_COLON = r':'
 
 
+
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
@@ -99,6 +102,15 @@ def t_ID(t):
     t.type = reserved.get(t.value, 'ID')
     return t
 
+def t_FLOAT_LIT(t):
+    r'\d+[.]\d+'
+    try:
+        t.value = float(t.value)
+    except:
+        t.value = 0.0
+        print("Error in specifying float literal")
+    return t
+
 def t_INT_LIT(t):
     r'\d+'
     try:
@@ -108,15 +120,9 @@ def t_INT_LIT(t):
         print("Error in specifying integer literal")
     return t
 
-'''
-def t_FLOAT_LIT(t):
-    #PLEASE HELP WRITE REGEX FOR FLOAT NUMBERS
-    try:
-        t.value = float(t.value)
-    except:
-        t.value = 0.0
-    return t
-'''
+
+
+
 t_ignore = ' \t'
 
 def t_error(t):
