@@ -34,6 +34,8 @@ reserved = {
 
 tokens += list(reserved.values())
 
+t_ignore_COMMENT=r'//.*'
+
 t_GE = r'>='
 t_LE = r'<='
 t_EQEQ = r'=='
@@ -79,6 +81,7 @@ t_DOT = r'\.'
 t_COMMA = r'\,'
 t_SCOLON = r';'
 t_COLON = r':'
+
 
 
 def t_newline(t):
