@@ -4,5 +4,5 @@ A mini-compiler for Golang implemented using PLY (Python Lex and YACC) that hand
 This compiler needs ply module to run
 
  ```
- pip install ply
+ pip install ply==3.11
  ```
