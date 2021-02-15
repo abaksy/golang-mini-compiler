@@ -28,6 +28,10 @@ var_list = []
 generated = {'temp': [], 'scope': ['scope_0'], 'label': [], 'str_list': []}
 
 def gen(s):
+    '''
+    Generate a new label for a scope or a string identifier when asked to
+    This is used for maintaining scope in our symbol table
+    '''
     if s not in generated.keys():
         generated[s] = []
     temp = s + '_' + str(len(generated[s]))
@@ -39,9 +43,7 @@ def print_error(err):
     sys.exit(1)
 
 def check_variable(TreeNode):
-    # return 2 values. first is the name for the variable, second is 0 if variable not found
-    # TreeNode.print_node()
-    # symbol_table.print_symbol_table()
+    # Return 2 values. first is the name for the variable, second is 0 if variable not found
     if TreeNode.isLvalue == 1:
         if TreeNode.data not in generated['temp']:
             name = symbol_table.search_identifier(TreeNode.data)
@@ -102,20 +104,31 @@ precedence = (
     ('left', 'STAR', 'DIVIDE','MODULO','AMP','AND_OR','LS','RS'),
 )
 
+
+'''
+General Rule for writing a ply YACC rule
+
+p is a variable of type yacc.YaccProduction
+p.slice holds the matched terminals and non-terminals in a string
+
+p[0] is of type None (as it is the LHS of the production), so we assign to it  various values
+to make it not None and hence build the syntax tree as 
+each production is run through one at a time
+
+Whenever a block or a function starts, create a new scope by calling the gen() function
+
+If needed, p[0] can either be assigned simply to another non-terminal symbol on the left 
+Or we can create a tree Node and assign it to p[0] (useful for things like variable declarations etc.)
+
+Nodes of the AST are stored in the TreeNode class objects
+Nodes of the Symbol Table are stored in the SymbolTable class objects
+'''
 def p_SourceFile(p):
     '''SourceFile : PACKAGE IDENTIFIER SEMICOLON ImportDeclList TopLevelDeclList
     '''
     parsed.append(p.slice)
     # TODO: Ignoring package name and Imports for now
     p[0] = p[5]
-    var_list = symbol_table.make_var_list()
-    three_addr_code = convert_tac(p[0].TAC)
-    symbol_table.fill_next_use(three_addr_code)
-    #assembly_code = generate_assembly(three_addr_code,var_list,symbol_table)
-    # p[0].TAC.print_code()
-    # three_addr_code.print_code()
-    #assembly_code.print_code()
-    # symbol_table.print_symbol_table()
     return
 
 def p_ImportDeclList(p):
@@ -1202,7 +1215,7 @@ logging.basicConfig(
 
 log = logging.getLogger()
 
-yacc.yacc(debug=True, debuglog=log)
+yacc.yacc(debug=True, debuglog=log)    #Startup YACC
 
 input_file = sys.argv[1]
 
@@ -1213,10 +1226,8 @@ if os.path.isfile(input_file) is False:
 
 input_code = open(input_file, 'r').read()
 
-if input_code[len(input_code)-1] != '\n':
+if input_code[len(input_code)-1] != '\n':  #Add trailing newline to the file if it does not exist
     input_code += '\n'
 
-yacc.parse(input_code, debug=log, tracking=True)
-
-
+yacc.parse(input_code, debug=log, tracking=True)   #Run YACC, write log information to parselog.txt
 symbol_table.print_symbol_table()
