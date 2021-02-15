@@ -41,12 +41,13 @@ class ThreeAddressCode(Code):
 class TreeNode:
     """Defines a class for p which stores the element for the Node"""
 
-    def __init__(self, name, data, input_type, isLvalue = None, children = None, TAC = None):
+    def __init__(self, name, data, input_type, line_no, isLvalue = None, children = None, TAC = None):
         """Initializes class TreeNode"""
 
         self.name = name
         self.data = data
         self.input_type = input_type
+        self.lineno = line_no
 
         if isLvalue is None:
             self.isLvalue = 0
