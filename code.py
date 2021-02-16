@@ -41,7 +41,7 @@ class ThreeAddressCode(Code):
 class TreeNode:
     """Defines a class for p which stores the element for the Node"""
 
-    def __init__(self, name, data, input_type, line_no, isLvalue = None, children = None, TAC = None):
+    def __init__(self, name, data, input_type, line_no, isLvalue = None, children = None):
         """Initializes class TreeNode"""
 
         self.name = name
@@ -59,11 +59,6 @@ class TreeNode:
         else:
             self.children = children
 
-        if TAC is None:
-            self.TAC = ThreeAddressCode()
-        else:
-            self.TAC = TAC
-
     def print_node(self):
         print("Name:", self.name, "Data:", self.data, "Type:", self.input_type, "Is L-Value?", self.isLvalue)
         if len(self.children) != 0:
@@ -74,9 +69,4 @@ class TreeNode:
                     child.print_node()
                 else:
                     print(child)
-
-        if self.TAC.length() != 0:
-            print("Three Address Code: ")
-            self.TAC.print_code()
-        print("")
 

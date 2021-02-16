@@ -131,16 +131,17 @@ class SymbolTable:
                 print("Identifiers:")
                 for x in self.symbol_table[y]['identifiers']:
                     x.print_node()
+            '''
             if len(self.symbol_table[y]['functions']) != 0:
                 print("Functions:")
                 for x in self.symbol_table[y]['functions']:
                     x.print_node()
+            '''
             if len(self.symbol_table[y]['allvars']) != 0:
                 print("Allvars:")
                 for x in self.symbol_table[y]['allvars']:
                     x.print_node()
-            print("")
-
+            print()
     def make_var_list(self):
         for y in self.symbol_table.keys():
             for x in self.symbol_table[y]['allvars']:
