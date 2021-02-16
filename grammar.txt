@@ -1,0 +1,259 @@
+SourceFile : PACKAGE IDENTIFIER SEMICOLON ImportDeclList TopLevelDeclList
+    
+ImportDeclList : ImportDecl SEMICOLON ImportDeclList
+                      | empty
+    
+TopLevelDeclList : TopLevelDecl SEMICOLON TopLevelDeclList
+                        | empty
+    
+TopLevelDecl : Declaration
+                    | FunctionDecl
+    
+ImportDecl : IMPORT LROUND ImportSpecList RROUND
+                  | IMPORT ImportSpec
+    
+ImportSpecList : ImportSpec SEMICOLON ImportSpecList
+                      | empty
+    
+ImportSpec : DOT string_lit
+                  | IDENTIFIER string_lit
+                  | empty string_lit
+    
+Block : LCURLY ScopeStart StatementList ScopeEnd RCURLY
+    
+ScopeStart : empty
+    
+ScopeEnd : empty
+    
+StatementList : Statement SEMICOLON StatementList
+                     | empty
+    
+Statement : Declaration
+                 | SimpleStmt
+                 | ReturnStmt
+                 | Block
+                 | IfStmt
+                 | SwitchStmt
+                 | ForStmt
+                 | PrintIntStmt
+                 | PrintStrStmt
+    
+PrintIntStmt : PRINTLN LROUND IDENTIFIER RROUND
+                    | PRINTLN LROUND int_lit RROUND
+    
+PrintStrStmt : PRINTLN LROUND string_lit RROUND
+    
+Declaration : ConstDecl
+                   | TypeDecl
+                   | VarDecl
+    
+ConstDecl : CONST LROUND ConstSpecList RROUND
+                 | CONST ConstSpec
+    
+ConstSpecList : empty
+                     | ConstSpecList ConstSpec SEMICOLON
+    
+ConstSpec : IDENTIFIER
+                 | IdentifierList
+                 | IDENTIFIER EQ Expression
+                 | IdentifierList EQ ExpressionList
+                 | IDENTIFIER Type EQ Expression
+                 | IdentifierList Type EQ ExpressionList
+    
+IdentifierList : IDENTIFIER COMMA IdentifierBotList
+    
+IdentifierBotList : IDENTIFIER COMMA IdentifierBotList
+                         | IDENTIFIER
+    
+ExpressionList : Expression COMMA ExpressionBotList
+    
+ExpressionBotList : Expression COMMA ExpressionBotList
+                         | Expression
+    
+TypeDecl : TYPE TypeSpecTopList
+    
+TypeSpecTopList : TypeSpec
+                       | LROUND TypeSpecList RROUND
+    
+TypeSpecList : empty
+                    | TypeSpecList TypeSpec SEMICOLON
+    
+TypeSpec : AliasDecl
+                | TypeDef
+    
+AliasDecl : IDENTIFIER EQ Type
+    
+TypeDef : IDENTIFIER Type
+    
+Type : StandardTypes
+        | LROUND Type RROUND
+    
+StandardTypes : PREDEFINED_TYPES
+    
+FunctionType : FUNC Signature
+    
+Signature : Parameters
+                 | Parameters Result
+    
+Result : Parameters
+              | Type
+    
+Parameters : LROUND RROUND
+                  | LROUND ParameterList RROUND
+    
+ParameterList : ParameterDecl
+                     | ParameterList COMMA ParameterDecl
+    
+ParameterDecl : IdentifierList Type
+                     | IDENTIFIER Type
+                     | Type
+    
+VarDecl : VAR VarSpecTopList
+    
+VarSpecTopList : VarSpec
+                      | LROUND VarSpecList RROUND
+    
+VarSpecList : empty
+                   | VarSpecList VarSpec SEMICOLON
+    
+VarSpec : IDENTIFIER Type
+               | IDENTIFIER EQ Expression
+               | IDENTIFIER Type EQ Expression
+               | IdentifierList Type
+               | IdentifierList EQ ExpressionList
+               | IdentifierList Type EQ ExpressionList
+    
+FunctionDecl : FUNC FunctionName Signature
+                    | FUNC FunctionName Signature FunctionBody
+    
+FunctionName : IDENTIFIER
+    
+FunctionBody : Block
+    
+SimpleStmt : Expression
+                  | Assignment
+                  | ShortVarDecl
+                  | IncDecStmt
+    
+IncDecStmt : Expression PLUS_PLUS
+                  | Expression MINUS_MINUS
+    
+ShortVarDecl : ExpressionList ASSIGN_OP ExpressionList
+                    | Expression ASSIGN_OP Expression
+    
+Assignment : ExpressionList assign_op ExpressionList
+                  | Expression assign_op Expression
+    
+assign_op : EQ
+                 | PLUS_EQ
+                 | MINUS_EQ
+                 | OR_EQ
+                 | CARET_EQ
+                 | STAR_EQ
+                 | DIVIDE_EQ
+                 | MODULO_EQ
+                 | LS_EQ
+                 | RS_EQ
+                 | AMP_EQ
+                 | AND_OR_EQ
+    
+IfStmt : IF Expression Block
+              | IF Expression Block ELSE elseTail
+    
+elseTail : IfStmt
+                | Block
+    
+SwitchStmt : ExprSwitchStmt
+    
+ExprSwitchStmt : SWITCH SimpleStmt SEMICOLON LCURLY ScopeStart ExprCaseClauseList ScopeEnd RCURLY
+                      | SWITCH SimpleStmt SEMICOLON Expression LCURLY ScopeStart ExprCaseClauseList ScopeEnd RCURLY
+                      | SWITCH LCURLY ScopeStart ExprCaseClauseList ScopeEnd RCURLY
+                      | SWITCH Expression LCURLY ScopeStart ExprCaseClauseList ScopeEnd RCURLY
+    
+ExprCaseClauseList : empty
+                          | ExprCaseClauseList ExprCaseClause
+    
+ExprCaseClause : ExprSwitchCase COLON StatementList
+    
+ExprSwitchCase : CASE ExpressionList
+                      | DEFAULT
+                      | CASE Expression
+    
+ForStmt : FOR Expression Block
+               | FOR Block
+    
+ReturnStmt : RETURN
+                  | RETURN Expression
+                  | RETURN ExpressionList
+    
+Expression : UnaryExpr
+                  | Expression OR_OR Expression
+                  | Expression AMP_AMP Expression
+                  | Expression EQ_EQ Expression
+                  | Expression NOT_EQ Expression
+                  | Expression LT Expression
+                  | Expression LT_EQ Expression
+                  | Expression GT Expression
+                  | Expression GT_EQ Expression
+                  | Expression PLUS Expression
+                  | Expression MINUS Expression
+                  | Expression OR Expression
+                  | Expression CARET Expression
+                  | Expression STAR Expression
+                  | Expression DIVIDE Expression
+                  | Expression MODULO Expression
+                  | Expression LS Expression
+                  | Expression RS Expression
+                  | Expression AMP Expression
+                  | Expression AND_OR Expression
+    
+UnaryExpr : PrimaryExpr
+                 | unary_op UnaryExpr
+    
+unary_op : PLUS
+                | MINUS
+                | NOT
+                | CARET
+                | STAR
+                | AMP
+                | LT_MINUS
+    
+PrimaryExpr : Operand
+                   | IDENTIFIER
+                   | PrimaryExpr Selector
+                   | PrimaryExpr Index
+                   | PrimaryExpr Arguments
+    
+Operand  : Literal
+                | LROUND Expression RROUND
+    
+Literal  : BasicLit
+                | FunctionLit
+    
+BasicLit : int_lit
+                | float_lit
+                | string_lit
+                | rune_lit
+    
+int_lit : decimal_lit
+               | octal_lit
+               | hex_lit
+    
+decimal_lit : DECIMAL_LIT
+    
+float_lit : FLOAT_LIT
+    
+FunctionLit : FUNC Signature FunctionBody
+    
+Selector : DOT IDENTIFIER
+    
+Index : LSQUARE Expression RSQUARE
+    
+Arguments : LROUND RROUND
+                 | LROUND ExpressionList RROUND
+                 | LROUND Expression RROUND
+                 | LROUND Type RROUND
+                 | LROUND Type COMMA ExpressionList RROUND
+                 | LROUND Type COMMA Expression RROUND
+    
+string_lit : STRING_LIT

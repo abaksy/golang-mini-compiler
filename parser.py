@@ -13,10 +13,7 @@ import ply.lex as lex
 import ply.yacc as yacc
 import sys
 
-
-from codegen import convert_tac
 from code import Code
-from codegen import generate_assembly
 three_addr_code = ThreeAddressCode()
 assembly_code = Code()
 
@@ -149,10 +146,9 @@ def p_TopLevelDeclList(p):
     parsed.append(p.slice)
     if len(p) == 4:
         if p[3] != None:
-            p[0] = TreeNode('TopLevelDeclList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1]] + p[3].children, p[1].TAC)
-            p[0].TAC.append_TAC(p[3].TAC)
+            p[0] = TreeNode('TopLevelDeclList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1]] + p[3].children)
         else:
-            p[0] = TreeNode('TopLevelDeclList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1]], p[1].TAC)
+            p[0] = TreeNode('TopLevelDeclList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1]])
     return
 
 def p_TopLevelDecl(p):
@@ -218,8 +214,7 @@ def p_StatementList(p):
     '''
     parsed.append(p.slice)
     if len(p) == 4:
-        p[0] = TreeNode('StatementList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1].data] + p[3].children, p[1].TAC)
-        p[0].TAC.append_TAC(p[3].TAC)
+        p[0] = TreeNode('StatementList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1].data] + p[3].children)
     else:
         p[0] = TreeNode('StatementList', 0, 'INT', p.linespan(1)[0] - numLines)
     return
@@ -252,7 +247,6 @@ def p_PrintIntStmt(p):
         # p[0].isLvalue = 0
     else:
         p[0] = TreeNode('IDENTIFIER', p[3], 'INT', p.linespan(1)[0] - numLines, 1, [])
-    p[0].TAC.add_line(['print_int', check_variable(p[0]), '', ''])
     p[0].name = 'PrintIntStmt'
     return
 
@@ -264,7 +258,6 @@ def p_PrintStrStmt(p):
     parametersNode = SymbolTableNode(p[3].data, p[3].input_type)
     newNode = SymbolTableNode(name, p[3].input_type, parameters = [parametersNode])
     symbol_table.add_var(newNode)
-    p[0].TAC.add_line(['print_str', name, '', ''])
     p[0].name = 'PrintStrStmt'
     return
 
@@ -308,7 +301,7 @@ def p_IdentifierList(p):
     '''
     parsed.append(p.slice)
     node = TreeNode('IDENTIFIER', p[1], 'INT', p.linespan(1)[0] - numLines, 1)
-    p[0] = TreeNode('IdentifierList', 0, 'None', p.linespan(1)[0] - numLines, 0, [node] + p[3].children, p[3].TAC)
+    p[0] = TreeNode('IdentifierList', 0, 'None', p.linespan(1)[0] - numLines, 0, [node] + p[3].children)
     return
 
 def p_IdentifierBotList(p):
@@ -321,7 +314,7 @@ def p_IdentifierBotList(p):
         p[0] = TreeNode('IdentifierBotList', 0, 'None', p.linespan(1)[0] - numLines, 0, [node])
     elif len(p) == 4:
         node = TreeNode('IDENTIFIER', p[1], 'INT', p.linespan(1)[0] - numLines, 1)
-        p[0] = TreeNode('IdentifierBotList', 0, 'None', p.linespan(1)[0] - numLines, 0, [node] + p[3].children, p[3].TAC)
+        p[0] = TreeNode('IdentifierBotList', 0, 'None', p.linespan(1)[0] - numLines, 0, [node] + p[3].children)
     return
 
 
@@ -329,8 +322,7 @@ def p_ExpressionList(p):
     '''ExpressionList : Expression COMMA ExpressionBotList
     '''
     parsed.append(p.slice)
-    p[0] = TreeNode('ExpressionList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1]] + p[3].children, p[1].TAC)
-    p[0].TAC.append_TAC(p[3].TAC)
+    p[0] = TreeNode('ExpressionList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1]] + p[3].children)
     return
 
 def p_ExpressionBotList(p):
@@ -339,10 +331,9 @@ def p_ExpressionBotList(p):
     '''
     parsed.append(p.slice)
     if len(p) == 2:
-        p[0] = TreeNode('ExpressionBotList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1]], p[1].TAC)
+        p[0] = TreeNode('ExpressionBotList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1]])
     elif len(p) == 4:
-        p[0] = TreeNode('ExpressionBotList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1]] + p[3].children, p[1].TAC)
-        p[0].TAC.append_TAC(p[3].TAC)
+        p[0] = TreeNode('ExpressionBotList', 0, 'INT', p.linespan(1)[0] - numLines, 0, [p[1]] + p[3].children)
     return
 
 def p_TypeDecl(p):
@@ -529,8 +520,7 @@ def p_ParameterList(p):
         p[0] = p[1]
         p[0].name = 'ParameterList'
     elif len(p) == 4:
-        p[0] = TreeNode('ParameterList', p[1].data + p[3].data, 'None', p.linespan(1)[0] - numLines, 0, p[1].children + p[3].children, p[1].TAC)
-        p[0].TAC.append_TAC(p[3].TAC)
+        p[0] = TreeNode('ParameterList', p[1].data + p[3].data, 'None', p.linespan(1)[0] - numLines, 0, p[1].children + p[3].children)
     return
 
 def p_ParameterDecl(p):
@@ -639,20 +629,12 @@ def p_FunctionDecl(p):
     parsed.append(p.slice)
     # symbol_table.print_symbol_table()
     p[0] = TreeNode('FunctionDecl', 0, 'INT', p.linespan(1)[0] - numLines)
-    # print symbol_table.current_scope
-    # p[4].TAC.print_code()
     symbol_table.add_function(p[2].data, p[3].input_type, p[3].children)
     if len(p) == 5:
         noOfParams = 0
         for f in symbol_table.symbol_table[symbol_table.current_scope]['functions']:
             if f.name == p[2].data:
                 noOfParams = len(f.parameters)
-        p[0].TAC.add_line(['func', check_variable(p[2]), str(noOfParams), ''])
-        for child in reversed(p[3].children):
-            p[0].TAC.add_line(['getparam', p[4].data + '_' + child.data, '', ''])
-        p[0].TAC.add_line(['stack_push', '', '', ''])
-
-        p[0].TAC.append_TAC(p[4].TAC)
     return
 
 def p_FunctionName(p):
@@ -690,9 +672,11 @@ def p_IncDecStmt(p):
     p[0] = p[1]
     if p[1].isLvalue == 1:
         if p[2] == '++':
-            p[0].TAC.add_line(['+', check_variable(p[1]), check_variable(p[1]), one_val.data])
+            pass
+            #p[0].TAC.add_line(['+', check_variable(p[1]), check_variable(p[1]), one_val.data])
         else:
-            p[0].TAC.add_line(['-', check_variable(p[1]), check_variable(p[1]), one_val.data])
+            pass
+            #p[0].TAC.add_line(['-', check_variable(p[1]), check_variable(p[1]), one_val.data])
     else:
         print_error("Lvalue required", p.linespan(1)[0] - numLines)
     p[0].name = 'IncDecStmt'
@@ -708,8 +692,6 @@ def p_ShortVarDecl(p):
     if p[1].name == 'ExpressionList':
         l1 = len(p[1].children)
         l2 = len(p[3].children)
-        p[0].TAC.append_TAC(p[3].TAC)
-        p[0].TAC.append_TAC(p[1].TAC)
         if l1 == l2:
             for i in range(l1):
                 if p[1].children[i].isLvalue == 0:
@@ -719,7 +701,6 @@ def p_ShortVarDecl(p):
                     if symbol_table.add_identifier(p[1].children[i]) == False:
                         print_error("Unable to add to SymbolTable", -1)
                         return
-                    p[0].TAC.add_line([p[2], check_variable(p[1].children[i]), check_variable(p[3].children[i]), ''])
         else:
             print_error("Variable Declaration mismatch: " + str(l1) + " identifier(s) but " + str(l2) + " value(s)", p.linespan(1)[0] - numLines)
 
@@ -731,9 +712,6 @@ def p_ShortVarDecl(p):
             if symbol_table.add_identifier(p[1]) == False:
                 print_error("Unable to add to SymbolTable", -1)
                 return
-            p[0].TAC.append_TAC(p[3].TAC)
-            p[0].TAC.append_TAC(p[1].TAC)
-            p[0].TAC.add_line([p[2], check_variable(p[1]), check_variable(p[3]), ''])
     return
 
 def p_Assignment(p):
@@ -745,8 +723,6 @@ def p_Assignment(p):
     if p[1].name == 'ExpressionList':
         l1 = len(p[1].children)
         l2 = len(p[3].children)
-        p[0].TAC.append_TAC(p[3].TAC)
-        p[0].TAC.append_TAC(p[1].TAC)
         if l1 == l2:
             for i in range(l1):
                 if p[1].children[i].isLvalue == 0:
@@ -759,7 +735,6 @@ def p_Assignment(p):
                     if p[3].children[i].isLvalue == 1 and symbol_table.search_identifier(p[3].children[i].data) == False and p[3].children[i].data not in generated['temp']:
                         print_error("Variable " + p[3].children[i].data + " is undefined", p.linespan(1)[0] - numLines)
                         return
-                    p[0].TAC.add_line([p[2].data, check_variable(p[1].children[i]), check_variable(p[3].children[i]), ''])
         else:
             print_error("Variable Declaration mismatch: " + str(l1) + " identifier(s) but " + str(l2) + " value(s)",  p.linespan(1)[0] - numLines)
 
@@ -774,10 +749,6 @@ def p_Assignment(p):
             if p[3].isLvalue == 1 and symbol_table.search_identifier(p[3].data) == False and p[3].data not in generated['temp']:
                 print_error("Variable " + p[3].data + " is undefined", p.linespan(1)[0] - numLines)
                 return
-            # print symbol_table.current_scope
-            p[0].TAC.append_TAC(p[3].TAC)
-            p[0].TAC.append_TAC(p[1].TAC)
-            p[0].TAC.add_line([p[2].data, check_variable(p[1]), check_variable(p[3]), ''])
     return
 
 def p_assign_op(p):
@@ -806,21 +777,10 @@ def p_IfStmt(p):
     if len(p) == 4:
         l1 = gen('label')
         p[0] = TreeNode('IfStmt', 0, 'INT', p.linespan(1)[0] - numLines)
-        p[0].TAC.append_TAC(p[2].TAC)
-        p[0].TAC.add_line(['ifgotoeq', check_variable(p[2]), '0', l1])
-        p[0].TAC.append_TAC(p[3].TAC)
-        p[0].TAC.add_line(['label', l1, '', ''])
     if len(p) == 6:
         l1 = gen('label')
         l2 = gen('label')
         p[0] = TreeNode('IfStmt', 0, 'INT', p.linespan(1)[0] - numLines)
-        p[0].TAC.append_TAC(p[2].TAC)
-        p[0].TAC.add_line(['ifgotoeq', check_variable(p[2]), '0', l1])
-        p[0].TAC.append_TAC(p[3].TAC)
-        p[0].TAC.add_line(['goto', l2, '', ''])
-        p[0].TAC.add_line(['label', l1, '', ''])
-        p[0].TAC.append_TAC(p[5].TAC)
-        p[0].TAC.add_line(['label', l2, '', ''])
     return
 
 def p_elseTail(p):
@@ -836,7 +796,7 @@ def p_SwitchStmt(p):
     '''SwitchStmt : ExprSwitchStmt
     '''
     parsed.append(p.slice)
-    p[0] = TreeNode('SwitchStmt', 0, 'INT', p.linespan(1)[0] - numLines, 0, [], p[1].TAC)
+    p[0] = TreeNode('SwitchStmt', 0, 'INT', p.linespan(1)[0] - numLines, 0, [])
     return
 
 def p_ExprSwitchStmt(p):
@@ -850,18 +810,9 @@ def p_ExprSwitchStmt(p):
         l1 = gen('label')
         l2 = gen('label')
         p[0] = TreeNode('ExprSwitchStmt', 0, 'INT', p.linespan(1)[0] - numLines)
-        p[0].TAC.append_TAC(p[2].TAC)
         t1 = TreeNode('IDENTIFIER', gen('temp'), 'INT', p.linespan(1)[0] - numLines, 1)
-        p[0].TAC.add_line(['=', check_variable(t1) , check_variable(p[2]), ''])
-        p[0].TAC.append_TAC(p[5].data)
         for i in range(len(p[5].children)):
-            p[0].TAC.add_line(['ifgotoeq', check_variable(t1), p[5].children[i][0], p[5].children[i][1]])
-        p[0].TAC.add_line(['goto', l2, '', ''])
-        for i in range(p[5].TAC.length()):
-            if i in p[5].TAC.leaders[1:]:
-                p[0].TAC.add_line(['goto', l2, '', ''])
-            p[0].TAC.add_line(p[5].TAC.code[i])
-        p[0].TAC.add_line(['label', l2, '', ''])
+            pass
     return
 
 def p_ExprCaseClauseList(p):
@@ -874,10 +825,7 @@ def p_ExprCaseClauseList(p):
     if len(p) == 3:
         TAC1 = p[1].data
         TAC2 = p[2].data
-        p[0] = TreeNode('ExprCaseClauseList', TAC1, 'INT', p.linespan(1)[0] - numLines, 0, p[1].children + p[2].children, p[1].TAC)
-        p[0].TAC.add_leader(p[0].TAC.length())
-        p[0].TAC.append_TAC(p[2].TAC)
-        p[0].data.append_TAC(TAC2)
+        p[0] = TreeNode('ExprCaseClauseList', TAC1, 'INT', p.linespan(1)[0] - numLines, 0, p[1].children + p[2].children)
 
     else:
         p[0] = TreeNode('ExprCaseClauseList', TAC1, 'INT', p.linespan(1)[0] - numLines)
@@ -890,12 +838,8 @@ def p_ExprCaseClause(p):
     parsed.append(p.slice)
     l1 = gen('label')
     p[0] = TreeNode('ExprCaseClause', 0, 'INT', p.linespan(1)[0] - numLines)
-    # p[0].TAC.append_TAC(p[1].TAC)
-    p[0].TAC.add_line(['label', l1, '', ''])
-    # p[0].TAC.add_line(['ifgotoneq', p[1].children, p[1].children, l1])
-    p[0].TAC.append_TAC(p[3].TAC)
     p[0].children = [[p[1].data,l1]]
-    p[0].data = p[1].TAC
+    p[0].data = None
 
     return
 
@@ -908,7 +852,6 @@ def p_ExprSwitchCase(p):
     p[0] = TreeNode('ExprSwitchCase', 0, 'INT', p.linespan(1)[0] - numLines)
     if len(p) == 3:
         p[0].data = p[2].data
-        p[0].TAC = p[2].TAC
 
     return
 
@@ -921,20 +864,9 @@ def p_ForStmt(p):
     if len(p) == 4:
         l1 = gen('label')
         l2 = gen('label')
-        p[0].TAC.add_line(['label', l1, '', ''])
-        p[0].TAC.append_TAC(p[2].TAC)
-        p[0].TAC.add_line(['ifgotoeq',check_variable(p[2]), '0', l2])
-        p[0].TAC.append_TAC(p[3].TAC)
-        p[0].TAC.add_line(['goto', l1, '', ''])
-        p[0].TAC.add_line(['label', l2, '', ''])
 
     if len(p) == 3:
         l1 = gen('label')
-        # l2 = gen('label')
-        p[0].TAC.add_line(['label', l1, '', ''])
-        p[0].TAC.append_TAC(p[2].TAC)
-        p[0].TAC.add_line(['goto', l1, '', ''])
-        # p[0].TAC.add_line([l2])
     return
 
 def p_ReturnStmt(p):
@@ -945,12 +877,10 @@ def p_ReturnStmt(p):
     parsed.append(p.slice)
     if len(p) == 2:
         p[0] = TreeNode('ReturnStmt', 0, 'None', p.linespan(1)[0] - numLines)
-        p[0].TAC.add_line(['return', '', '', ''])
     if len(p) == 3:
         if p[2].name == 'Expression':
             p[0] = p[2]
             p[0].name = 'ReturnStmt'
-            p[0].TAC.add_line(['return', check_variable(p[2]), '', ''])
     return
 
 def p_BreakStmt(p):
@@ -997,9 +927,7 @@ def p_Expression(p):
     if len(p) == 2:
         p[0] = p[1]
     elif len(p) == 4:
-        p[0] = TreeNode('IDENTIFIER', gen('temp'), 'INT', p.linespan(1)[0] - numLines, 1, [], p[1].TAC)
-        p[0].TAC.append_TAC(p[3].TAC)
-        p[0].TAC.add_line([p[2],check_variable(p[0]), check_variable(p[1]), check_variable(p[3])])
+        p[0] = TreeNode('IDENTIFIER', gen('temp'), 'INT', p.linespan(1)[0] - numLines, 1, [])
     p[0].name = 'Expression'
     return
 
@@ -1012,7 +940,6 @@ def p_UnaryExpr(p):
         p[0] = p[1]
     elif len(p) == 3:
         p[0] = TreeNode('IDENTIFIER', gen('temp'), 'INT', p.linespan(1)[0] - numLines, 1)
-        p[0].TAC.add_line([check_variable(p[1]), check_variable(p[0]), check_variable(p[2]), ''])
     p[0].name = 'UnaryExpr'
     return
 
@@ -1044,11 +971,9 @@ def p_PrimaryExpr(p):
             p[0] = p[1]
     elif len(p) == 3:
         if p[2].name == 'Index':
-            p[0] = TreeNode('IDENTIFIER', p[1].data, 'INT', p.linespan(1)[0] - numLines,  1, p[2].data)
+            p[0] = TreeNode('IDENTIFIER', p[1].data, 'INT', p.linespan(1)[0] - numLines,  1)
         elif p[2].name == 'Arguments':
             p[0] = TreeNode('IDENTIFIER', gen('temp'), 'INT',p.linespan(1)[0] - numLines, 1)
-            p[0].TAC.append_TAC(p[1].TAC)
-            p[0].TAC.append_TAC(p[2].TAC)
 
             # p[1].print_node()
             func = check_variable(p[1]).split("_")
@@ -1061,12 +986,9 @@ def p_PrimaryExpr(p):
 
             # p[2].print_node()
             for child in p[2].children:
-                p[0].TAC.add_line(['putparam', check_variable(child), '', ''])
-
+                pass
             if temp != p[2].data:
                 print_error('Function ' + funcName + ' requires ' + str(temp) + ' parameters but ' + str(p[2].data) + ' supplied', p.linespan(1)[0] - numLines)
-            p[0].TAC.add_line(['call', check_variable(p[1]), str(p[2].data), ''])
-            p[0].TAC.add_line(['return_value', check_variable(p[0]), '', ''])
     p[0].name = 'PrimaryExpr'
     return
 
@@ -1176,7 +1098,7 @@ def p_Arguments(p):
         p[0] = TreeNode('Arguments', 0, 'None', p.linespan(1)[0] - numLines)
     if len(p) == 4:
         if p[2].name == 'Expression':
-            p[0] = TreeNode('Arguments', 1, 'None', p.linespan(1)[0] - numLines, 0, [p[2]], p[2].TAC)
+            p[0] = TreeNode('Arguments', 1, 'None', p.linespan(1)[0] - numLines, 0, [p[2]])
         if p[2].name == 'ExpressionList':
             p[0] = p[2]
             p[0].name = 'Arguments'
