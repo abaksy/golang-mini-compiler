@@ -3,11 +3,7 @@
 import ply.lex as lex
 import sys
 
-print_op = 0
-
 input_file = sys.argv[1]
-if len(sys.argv) > 2:
-    print_op = int(sys.argv[2])
 
 import os
 if os.path.isfile(input_file) is False:
@@ -105,19 +101,16 @@ tokens = list(reserved_keywords.values()) + [
     'HEX_LIT',
     'FLOAT_LIT',
     'STRING_LIT',
-    'RUNE_LIT',
 
     # 'UNICODE_DIGIT','UNICODE_LETTER',
     # 'ESCAPED_CHAR', 'BYTE_VALUE', 'OCTAL_BYTE_VALUE', 'HEX_BYTE_VALUE',
     # 'UNDERSCORE'
     'NEWLINE',
-    'PREDEFINED_TYPES',
     'IDENTIFIER',
 
     'BREAK',
     'CONTINUE',
-    'RETURN',
-    'PRINTLN'
+    'RETURN'
 ]
 
 t_ignore = ' \t'
@@ -139,11 +132,6 @@ def t_CONTINUE(t):
 def t_RETURN(t):
     r'return'
     setSemiMode()
-    return t
-
-def t_PRINTLN(t):
-    r'Println'
-    # setSemiMode()
     return t
 
 # Note: We need to have tokens in such a way that
@@ -238,18 +226,8 @@ def t_RSQUARE(t):
     setSemiMode()
     return t
 
-def t_PREDEFINED_TYPES(t):
-    r'((int)|(float)|(char)|(string)|(bool))'
-    return t
-
 def t_STRING_LIT(t):
-    r'(\"[^(\")]*\")|\`((\\x[0-9A-Fa-f]{2})|(\\u[0-9A-Fa-f]{4})|(\\U[0-9A-Fa-f]{8})|(\\[0-7]{3})|(\\(a|b|f|n|r|t|v|\\|\'|\"))|([^(\`)]))*\`'
-    t.value = t.value[1:-1]
-    setSemiMode()
-    return t
-
-def t_RUNE_LIT(t):
-    r'\'((\\x[0-9A-Fa-f]{2})|(\\u[0-9A-Fa-f]{4})|(\\U[0-9A-Fa-f]{8})|(\\[0-7]{3})|(\\(a|b|f|n|r|t|v|\\|\'|\"))|([^(\')]))\''
+    r'(\"[^(\")]*\")|(\`[^(\`)]*\`)'
     t.value = t.value[1:-1]
     setSemiMode()
     return t
@@ -274,59 +252,17 @@ def t_IDENTIFIER(t):
     return t
 
 def t_error(t):
-    print(t)
-    print("*** Error (Lexer): There is an illegal character '%r' in the input program on line number %d and position %d ***" % (t.value, t.lineno, t.lexpos))
+    print("There is an illegal character '%s' in the input program" % t.value[0])
     t.lexer.skip(1)
 
 lexer = lex.lex()
 lexer.input(input_code)
-
-token_type_list = {}
-lexeme_list = {}
 token_stream = []
 
-tokens_more_than_once = ['IDENTIFIER']
+t = lexer.token()
+while t is not None:
+    token_stream.append(t)
+    t = lexer.token()
 
-while 1:
-    tokens_generated = lexer.token()
-    token_stream.append(tokens_generated)
-
-    if not tokens_generated:
-        break
-    token_name = tokens_generated.value
-    token_type = tokens_generated.type
-
-    if token_type not in token_type_list:
-        token_type_list[token_type]= 1
-        lexeme_list[token_type] = [token_name]
-    else:
-        if token_name not in lexeme_list[token_type]:
-            lexeme_list[token_type].append(token_name)
-            token_type_list[token_type] += 1
-        else:
-            if token_type not in tokens_more_than_once:
-                token_type_list[token_type] += 1
-
-def print_tokens(tokens):
-    """Prints the token stream in order"""
-    for token in token_stream:
-        if token != None:
-            print(token)
-
-def print_lexemes(token_type_list, lexemes):
-    """Prints the lexemes in a tabular format"""
-    print("Token" + " " * 20 + "Occurrances" + " " * 22 + "Lexemes")
-    print("-" * 65)
-
-    for data in token_type_list:
-        sys.stdout.write("{:25s} {:>4s}".format(data, (str)(token_type_list[data])))
-        print("{:>35s}".format(lexemes[data][0]))
-        for lexlist in lexemes[data][1:]:
-            sys.stdout.write("{:>65s}\n".format(lexlist))
-        print("-" * 65)
-
-if print_op & 1:
-    print_lexemes(token_type_list, lexeme_list)
-if print_op & 2:
-    print_tokens(token_stream)
-
+for t in token_stream:
+    print(t)
