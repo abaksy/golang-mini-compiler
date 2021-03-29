@@ -1,10 +1,12 @@
 # golang-mini-compiler
-A mini-compiler for Golang implemented using Lex and YACC that handles the switch and while loop constructs
+A mini-compiler for Golang implemented using Python Lex and YACC (PLY) that handles the switch and while loop constructs
 
-Commands to run lexer and parser:
+Command to run first 4 stages of compiler (lexer, parser, semantic analyzer and intermediate code generator):
 
-```
-python lexer.py /path/to/Golang/code 2
+ ```
+ python3 lexer.py <filename>.go
+ ```
+ 
+ 
 
-python parser.py /path/to/Golang/code
-```
+
