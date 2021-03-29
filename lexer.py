@@ -263,6 +263,3 @@ t = lexer.token()
 while t is not None:
     token_stream.append(t)
     t = lexer.token()
-
-for t in token_stream:
-    print(t)

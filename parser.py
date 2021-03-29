@@ -13,17 +13,24 @@ import logging
 
 parsed=[]
 current_scope = 0
+temp_counter = 0
+label_counter = 0
 
 ThreeAddrCode = ThreeAddressCode()
 SymbolTable = SymbolTable()
 
 def temp_gen():
-    i = randint(0, sys.maxsize)
-    return 'temp_' + str(i)
+    global temp_counter
+    tempname = 'temp_' + str(temp_counter)
+    temp_counter+=1
+    return tempname
+
 
 def label_gen():
-    i = randint(0, sys.maxsize)
-    return 'label_' + str(i)
+    global label_counter
+    labelname = 'label_' + str(label_counter)
+    label_counter+=1
+    return labelname
 
 precedence = (
     ('left','IDENTIFIER'),
@@ -61,8 +68,11 @@ def p_SourceFile(p):
     '''SourceFile : PACKAGE IDENTIFIER SEMICOLON ImportDeclList TopLevelDeclList
     '''
     # TODO: Ignoring package name and Imports for now
-    p[0] = p[4]
-    return
+    p[0] = p[5]
+    fname = filename.split(".")[0]
+    with open(f"{fname}_three_addr_code.txt", "w") as f:
+        for tac_line in p[0].TAC.code:
+            f.write(str(tac_line)+"\n")
     # parsed.append(p.slice)
 
 def p_ImportDeclList(p):
@@ -83,7 +93,7 @@ def p_TopLevelDeclList(p):
             p[0] = TreeNode('TopLevelDeclList', 0, 'INT', 0, [p[1]] + p[3].children, p[1].TAC)
             p[0].TAC.append_TAC(p[3].TAC)
         else:
-            p[0] = TreeNode('TopLevelDeclList', 0, 'INT', 0, [p[1]], p[1].TAC)   
+            p[0] = TreeNode('TopLevelDeclList', 0, 'INT', 0, [p[1]], p[1].TAC)
     return
 
 def p_TopLevelDecl(p):
@@ -124,7 +134,6 @@ def p_Block(p):
     '''
     p[0] = p[3]
     p[0].name = 'Block'
-    # p[0].print_node()
     return
     # parsed.append(p.slice)
 
@@ -1014,6 +1023,8 @@ def p_Arguments(p):
 def p_error(p):
     if p == None:
         print(str(sys.argv[1]) + " :: You missed something at the end")
+    else:
+        print(f"SYNTAX ERROR on line number {p.lineno - numLines + 1}")
 
 def p_empty(p):
     'empty :'
@@ -1039,7 +1050,9 @@ filename = sys.argv[1]
 
 inp = open(filename, 'r')
 inp = inp.read()
+numLines = len([x for x in inp.split("\n")])
 inp += "\n"
+
 
 yacc.parse(inp, debug=log)
 SymbolTable.print_symbol_table()
