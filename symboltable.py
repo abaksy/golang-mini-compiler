@@ -6,6 +6,7 @@ class symboltable_node:
         self.name = ''
         self.type = ''
         self.scope = 0
+        self.value = 0
     # def add_line(self, line):
     #     """Appends a line to the code"""
     #     self.code.append(line)
@@ -30,13 +31,16 @@ class SymbolTable:
     def print_symbol_table(self):
         """Prints the symbol table"""
         print('\nSYMBOL TABLE')
-        print("NAME  |  TYPE  |  SCOPE\n------------------------------")
+        print("NAME  |  TYPE  |  SCOPE  |  VALUE\n------------------------------")
         for i in range(len(self.symbol_table)):
             entry =  self.symbol_table[i]
+            print(entry.name, "\t", entry.type, "\t", entry.scope, "\t ", entry.value)
+            '''
             if entry.name.startswith("temp") or entry.name.startswith("label"):
                 pass
             else:
                 print(entry.name, "\t", entry.type, "\t", entry.scope)
+            '''
 
     def add_node(self, symboltable_node):
         self.symbol_table.append(symboltable_node)

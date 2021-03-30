@@ -535,7 +535,6 @@ def p_ShortVarDecl(p):
     '''ShortVarDecl : ExpressionList ASSIGN_OP ExpressionList
                  | Expression ASSIGN_OP Expression
     '''
-    # TODO: Add in symbol table
     global current_scope
     p[0] = TreeNode('ShortVarDecl', 0, 'INT')
     if p[1].name == 'ExpressionList':
@@ -553,6 +552,7 @@ def p_ShortVarDecl(p):
                         node.name = p[1].children[i].data
                         node.type = 'INT'
                         node.scope = current_scope
+                        node.value = p[3].children[i].data
                         SymbolTable.add_node(node)
                     p[0].TAC.add_line([p[2], p[1].children[i].data, p[3].children[i].data, ''])
         else:
@@ -572,6 +572,7 @@ def p_ShortVarDecl(p):
                 node.name = p[1].data
                 node.type = 'INT'
                 node.scope = current_scope
+                node.value = p[3].data
                 SymbolTable.add_node(node)
             return
 
@@ -592,20 +593,22 @@ def p_Assignment(p):
                 if p[1].children[i].isLvalue == 0:
                     print("*** Error: Cannot assign to constant ***") 
                 else: 
-                    print("Looking for: ", p[1].children[i].data)
+                    #print("Looking for: ", p[1].children[i].data)
                     if SymbolTable.search_node(p[1].children[i].data) == 0:
                         node = symboltable_node()
                         node.name = p[1].children[i].data
                         node.type = 'INT'
                         node.scope = current_scope
+                        node.value = p[3].children[i].data
                         SymbolTable.add_node(node)
         
                     if SymbolTable.search_node(p[3].children[i].data) == 0 and p[3].children[i].isLvalue ==1:
-                        print("Looking for: ", p[3].children[i].data)
+                        #print("Looking for: ", p[3].children[i].data)
                         node = symboltable_node()
                         node.name = p[3].children[i].data
                         node.type = 'INT'
                         node.scope = current_scope
+                        node.value = p[3].children[i].data
                         SymbolTable.add_node(node)
                     p[0].TAC.add_line([p[2].data, p[1].children[i].data, p[3].children[i].data, ''])
         else:
@@ -633,6 +636,7 @@ def p_Assignment(p):
                 node.name = p[3].data
                 node.type = 'INT'
                 node.scope = current_scope
+                node.value = p[3].data
                 SymbolTable.add_node(node)
             return
 
@@ -698,12 +702,19 @@ def p_ExprSwitchStmt(p):
                  | SWITCH LCURLY ExprCaseClauseList RCURLY
                  | SWITCH Expression LCURLY ExprCaseClauseList RCURLY
     '''
+    global current_scope
     if len(p) == 6:
         l1 = label_gen()
         l2 = label_gen()
         p[0] = TreeNode('ExprSwitchStmt', 0, 'INT')
         p[0].TAC.append_TAC(p[2].TAC)
         t1= temp_gen()
+        node = symboltable_node()
+        node.name = t1
+        node.scope = current_scope
+        node.value = p[2].data
+        node.type = 'INT'
+        SymbolTable.add_node(node)
         p[0].TAC.add_line(['=', t1 , p[2].data, ''])
         p[0].TAC.append_TAC(p[4].data)
         for i in range(len(p[4].children)):
@@ -837,10 +848,17 @@ def p_Expression(p):
                  | Expression AMP Expression
                  | Expression AND_OR Expression
     '''
+    global current_scope
     if len(p) == 2:
         p[0] = p[1]
     elif len(p) == 4:
-        p[0] = TreeNode('IDENTIFIER', temp_gen(), 'INT', 1, [], p[1].TAC)
+        temp = temp_gen()
+        node = symboltable_node()
+        node.name = temp
+        node.value = p[1].data + p[2] + p[3].data
+        node.scope = current_scope
+        SymbolTable.add_node(node)
+        p[0] = TreeNode('IDENTIFIER', temp, 'INT', 1, [], p[1].TAC)
         p[0].TAC.append_TAC(p[3].TAC)
         p[0].TAC.add_line([p[2], p[0].data, p[1].data, p[3].data])
     p[0].name = 'Expression'
@@ -850,10 +868,17 @@ def p_UnaryExpr(p):
     '''UnaryExpr : PrimaryExpr
                  | unary_op UnaryExpr
     '''
+    global current_scope
     if len(p) == 2:
         p[0] = p[1]
     elif len(p) == 3:
-        p[0] = TreeNode('IDENTIFIER', temp_gen(), 'INT', 1)
+        temp = temp_gen()
+        node = symboltable_node()
+        node.name = temp
+        node.value = p[2].data
+        node.scope = current_scope
+        SymbolTable.add_node(node)
+        p[0] = TreeNode('IDENTIFIER', temp, 'INT', 1)
         p[0].TAC.add_line([p[1].data, p[0].data, p[2].data])
     p[0].name = 'UnaryExpr'
     return

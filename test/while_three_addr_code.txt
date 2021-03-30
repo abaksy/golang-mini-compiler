@@ -1,0 +1,8 @@
+['func', 'main', '', '']
+[':=', 'sum', '243', '']
+['label_0']
+['<', 'temp_0', 'sum', '1000']
+['ifgotoeq', 'temp_0', 0, 'label_1']
+['+=', 'sum', 'sum', '']
+['goto', 'label_0']
+['label_1']
