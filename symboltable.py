@@ -20,6 +20,7 @@ class symboltable_node:
     #     """Returns length of code"""
     #     return len(self.code)
 
+
 class SymbolTable:
     """Defines a class for p which stores the element for the Node"""
 
@@ -33,8 +34,9 @@ class SymbolTable:
         print('\nSYMBOL TABLE')
         print("NAME  |  TYPE  |  SCOPE  |  VALUE\n------------------------------")
         for i in range(len(self.symbol_table)):
-            entry =  self.symbol_table[i]
-            print(entry.name, "\t", entry.type, "\t", entry.scope, "\t ", entry.value)
+            entry = self.symbol_table[i]
+            print(entry.name, "\t", entry.type, "\t",
+                  entry.scope, "\t ", entry.value)
             '''
             if entry.name.startswith("temp") or entry.name.startswith("label"):
                 pass
@@ -45,10 +47,8 @@ class SymbolTable:
     def add_node(self, symboltable_node):
         self.symbol_table.append(symboltable_node)
 
-    def search_node(self,name):
+    def search_node(self, name):
         for i in range(len(self.symbol_table)):
             if self.symbol_table[i].name == name:
-                return 1
-        return 0
-
-
+                return self.symbol_table[i]
+        return []

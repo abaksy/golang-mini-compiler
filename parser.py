@@ -21,14 +21,14 @@ ThreeAddrCode = ThreeAddressCode()
 SymbolTable = SymbolTable()
 
 
-def temp_gen():
+def tempGen():
     global temp_counter
     tempname = 'temp_' + str(temp_counter)
     temp_counter += 1
     return tempname
 
 
-def label_gen():
+def labelGen():
     global label_counter
     labelname = 'label_' + str(label_counter)
     label_counter += 1
@@ -40,7 +40,9 @@ def insertType(value):
         r'([0-9]+\.([0-9]+)?((e|E)(\+|\-)?[0-9]+)?)|([0-9]+(e|E)(\+|\-)?[0-9]+)|(\.[0-9]+((e|E)(\+|\-)?[0-9]+)?)')
     dec_regex = re.compile(r'[1-9][0-9]*')
     str_regex = re.compile(r'(\"[^(\")]*\")|(\`[^(\`)]*\`)')
-    if float_regex.match(value):
+    if value == '0':
+        return 'INT'
+    elif float_regex.match(value):
         return 'FLOAT'
     elif dec_regex.match(value):
         return 'INT'
@@ -49,6 +51,51 @@ def insertType(value):
     else:
         return 'EXPR'
 
+
+def getValue(name):
+    symtab_entry = SymbolTable.search_node(name)
+    if symtab_entry:
+        vartype = symtab_entry.type
+        val = symtab_entry.value
+        if vartype == 'INT':
+            return int(val)
+        elif vartype == 'FLOAT':
+            return float(val)
+        else:
+            return val
+    else:
+        val = name
+        typ = insertType(name)
+        if typ == 'INT':
+            return int(val)
+        elif typ == 'FLOAT':
+            return float(val)
+        else:
+            return val
+
+
+def evalExpr(op1, op, op2):
+    v1 = getValue(op1.data)
+    v2 = getValue(op2.data)
+    if op == '+':
+        return v1 + v2
+    elif op == '-':
+        return v1 - v2
+    elif op == '*':
+        return v1 * v2
+    elif op == '/':
+        return v1 / v2
+    elif op == '<':
+        return int(v1 < v2)
+    elif op == '>':
+        return int(v1 > v2)
+    elif op == '<=':
+        return int(v1 <= v2)
+    elif op == '>=':
+        return int(v1 >= v2)
+    elif op == '==':
+        return int(v1 == v2)
+    
 
 precedence = (
     ('left', 'IDENTIFIER'),
@@ -618,7 +665,7 @@ def p_ShortVarDecl(p):
                 if p[1].children[i].isLvalue == 0:
                     print("*** Error: Cannot assign to constant ***", p.lineno(1))
                 else:
-                    if SymbolTable.search_node(p[1].children[i].data) == 0:
+                    if SymbolTable.search_node(p[1].children[i].data) == []:
                         node = symboltable_node()
                         node.name = p[1].children[i].data
                         node.type = insertType(p[3].children[i].data)
@@ -640,7 +687,7 @@ def p_ShortVarDecl(p):
             p[0].TAC.append_TAC(p[3].TAC)
             p[0].TAC.append_TAC(p[1].TAC)
             p[0].TAC.add_line([p[2], p[1].data, p[3].data, ''])
-            if SymbolTable.search_node(p[1].data) == 0:
+            if SymbolTable.search_node(p[1].data) == []:
                 node = symboltable_node()
                 node.name = p[1].data
                 node.type = insertType(p[3].data)
@@ -667,7 +714,7 @@ def p_Assignment(p):
                     print("*** Error: Cannot assign to constant ***")
                 else:
                     #print("Looking for: ", p[1].children[i].data)
-                    if SymbolTable.search_node(p[1].children[i].data) == 0:
+                    if SymbolTable.search_node(p[1].children[i].data) == []:
                         node = symboltable_node()
                         node.name = p[1].children[i].data
                         node.type = insertType(p[3].children[i].data)
@@ -675,7 +722,7 @@ def p_Assignment(p):
                         node.value = p[3].children[i].data
                         SymbolTable.add_node(node)
 
-                    if SymbolTable.search_node(p[3].children[i].data) == 0 and p[3].children[i].isLvalue == 1:
+                    if SymbolTable.search_node(p[3].children[i].data) == [] and p[3].children[i].isLvalue == 1:
                         #print("Looking for: ", p[3].children[i].data)
                         node = symboltable_node()
                         node.name = p[3].children[i].data
@@ -699,15 +746,9 @@ def p_Assignment(p):
             p[0].TAC.append_TAC(p[1].TAC)
             p[0].TAC.add_line([p[2].data, p[1].data, p[3].data, ''])
             # and p[1].children[i].isLvalue ==1:
-            if SymbolTable.search_node(p[1].data) == 0:
+            if SymbolTable.search_node(p[1].data) == []:
                 print("*** Error: Variable not declared: ", p[1].data)
-                #print("(1) Looking for: ", p[1].data)
-                #node = symboltable_node()
-                #node.name = p[1].data
-                #node.type = 'INT'
-                #node.scope = current_scope
-                # SymbolTable.add_node(node)
-            if SymbolTable.search_node(p[3].data) == 0 and p[3].isLvalue == 1:
+            if SymbolTable.search_node(p[3].data) == [] and p[3].isLvalue == 1:
                 node = symboltable_node()
                 node.name = p[3].data
                 node.type = insertType(p[3].data)
@@ -740,15 +781,15 @@ def p_IfStmt(p):
             | IF Expression Block ELSE elseTail
     '''
     if len(p) == 4:
-        l1 = label_gen()
+        l1 = labelGen()
         p[0] = TreeNode('IfStmt', 0, 'INT')
         p[0].TAC.append_TAC(p[2].TAC)
         p[0].TAC.add_line(['ifgotoeq', p[2].data, 0, l1])
         p[0].TAC.append_TAC(p[3].TAC)
         p[0].TAC.add_line([l1])
     if len(p) == 6:
-        l1 = label_gen()
-        l2 = label_gen()
+        l1 = labelGen()
+        l2 = labelGen()
         p[0] = TreeNode('IfStmt', 0, 'INT')
         p[0].TAC.append_TAC(p[2].TAC)
         p[0].TAC.add_line(['ifgotoeq', p[2].data, 0, l1])
@@ -785,11 +826,11 @@ def p_ExprSwitchStmt(p):
     '''
     global current_scope
     if len(p) == 6:
-        l1 = label_gen()
-        l2 = label_gen()
+        l1 = labelGen()
+        l2 = labelGen()
         p[0] = TreeNode('ExprSwitchStmt', 0, 'INT')
         p[0].TAC.append_TAC(p[2].TAC)
-        t1 = temp_gen()
+        t1 = tempGen()
         node = symboltable_node()
         node.name = t1
         node.scope = current_scope
@@ -834,7 +875,7 @@ def p_ExprCaseClauseList(p):
 def p_ExprCaseClause(p):
     '''ExprCaseClause : ExprSwitchCase COLON StatementList
     '''
-    l1 = label_gen()
+    l1 = labelGen()
     p[0] = TreeNode('ExprCaseClause', 0, 'INT')
     # p[0].TAC.append_TAC(p[1].TAC)
     p[0].TAC.add_line([l1])
@@ -865,8 +906,8 @@ def p_ForStmt(p):
     '''
     p[0] = TreeNode('ForStmt', 0, 'INT')
     if len(p) == 4:
-        l1 = label_gen()
-        l2 = label_gen()
+        l1 = labelGen()
+        l2 = labelGen()
         p[0].TAC.add_line([l1])
         p[0].TAC.append_TAC(p[2].TAC)
         p[0].TAC.add_line(['ifgotoeq', p[2].data, 0, l2])
@@ -875,7 +916,7 @@ def p_ForStmt(p):
         p[0].TAC.add_line([l2])
 
     if len(p) == 3:
-        l1 = label_gen()
+        l1 = labelGen()
         # l2 = label_gen()
         p[0].TAC.add_line([l1])
         p[0].TAC.append_TAC(p[2].TAC)
@@ -936,13 +977,17 @@ def p_Expression(p):
     if len(p) == 2:
         p[0] = p[1]
     elif len(p) == 4:
-        temp = temp_gen()
+        temp = tempGen()
         node = symboltable_node()
         node.name = temp
         node.value = p[1].data + p[2] + p[3].data
-        node.type = "EXPR"
+        node.type = p[1].input_type
         node.scope = current_scope
         SymbolTable.add_node(node)
+        print(f"Evaluating expression {node.value}")
+        node.value = evalExpr(p[1], p[2], p[3])
+        SymbolTable.print_symbol_table()
+        #print(node.value, node.name)
         p[0] = TreeNode('IDENTIFIER', temp, 'INT', 1, [], p[1].TAC)
         p[0].TAC.append_TAC(p[3].TAC)
         p[0].TAC.add_line([p[2], p[0].data, p[1].data, p[3].data])
@@ -958,7 +1003,7 @@ def p_UnaryExpr(p):
     if len(p) == 2:
         p[0] = p[1]
     elif len(p) == 3:
-        temp = temp_gen()
+        temp = tempGen()
         node = symboltable_node()
         node.name = temp
         node.value = p[2].data
