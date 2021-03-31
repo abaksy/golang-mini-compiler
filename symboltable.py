@@ -52,3 +52,11 @@ class SymbolTable:
             if self.symbol_table[i].name == name:
                 return self.symbol_table[i]
         return []
+
+    def write_symbol_table(self, filename):
+        with open(filename, "w") as f:
+            for entry in self.symbol_table:
+                f.write(f"{entry.name},{entry.scope},{entry.type},{entry.value}\n")
+            
+
+

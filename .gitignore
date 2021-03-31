@@ -4,3 +4,5 @@ __pycache__
 parsetab.py
 parser.out
 parselog.txt
+*_three_addr_code.txt
+*_symtab.txt

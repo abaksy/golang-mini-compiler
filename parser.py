@@ -139,6 +139,7 @@ def p_SourceFile(p):
     with open(f"{fname}_three_addr_code.txt", "w") as f:
         for tac_line in p[0].TAC.code:
             f.write(str(tac_line)+"\n")
+    SymbolTable.write_symbol_table(f"{fname}_symtab.txt")
     # parsed.append(p.slice)
 
 
