@@ -2,17 +2,7 @@
 
 import ply.lex as lex
 import sys
-
-input_file = sys.argv[1]
-
 import os
-if os.path.isfile(input_file) is False:
-    print('Input file ' + input_file + ' does not exist')
-    sys.exit(1)
-
-input_code = open(input_file, 'r').read()
-if input_code[len(input_code)-1] != '\n':
-    input_code += '\n'
 
 semimode = False
 
@@ -259,6 +249,17 @@ def t_error(t):
     print("There is an illegal character '%s' in the input program" % t.value[0])
     t.lexer.skip(1)
 
+if len(sys.argv) < 2:
+    print("Please provide a valid file path!")
+    sys.exit(-1)
+input_file = sys.argv[1]
+if os.path.isfile(input_file) is False:
+    print('Input file ' + input_file + ' does not exist')
+    sys.exit(1)
+
+input_code = open(input_file, 'r').read()
+if input_code[len(input_code)-1] != '\n':
+    input_code += '\n'
 lexer = lex.lex()
 lexer.input(input_code)
 token_stream = []

@@ -1269,6 +1269,9 @@ logging.basicConfig(
 log = logging.getLogger()
 
 yacc.yacc(debug=True, debuglog=log)
+if len(sys.argv) < 2:
+    print("Please provide a valid file path!")
+    sys.exit(-1)
 filename = sys.argv[1]
 
 inp = open(filename, 'r')
