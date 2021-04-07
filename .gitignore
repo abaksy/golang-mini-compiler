@@ -1,8 +1,5 @@
-__pycache__
+__pycache__/
 .vscode
 *.py[cod]
-parsetab.py
 parser.out
-parselog.txt
-*_three_addr_code.txt
-*_symtab.txt
+logs/parselog.txt

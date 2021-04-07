@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python 
 import ply.lex as lex
 import ply.yacc as yacc
 from lexer import tokens
@@ -7,6 +7,8 @@ from code import TreeNode
 from code import ThreeAddressCode
 from symboltable import SymbolTable
 from symboltable import symboltable_node
+#import codegen
+import optimize_tac
 import sys
 from random import *
 import logging
@@ -64,14 +66,17 @@ def getValue(name):
         else:
             return val
     else:
-        val = name
-        typ = insertType(name)
-        if typ == 'INT':
-            return int(val)
-        elif typ == 'FLOAT':
-            return float(val)
-        else:
-            return val
+        try:
+            val = name
+            typ = insertType(name)
+            if typ == 'INT':
+                return int(val)
+            elif typ == 'FLOAT':
+                return float(val)
+            else:
+                return val
+        except:
+            return "NULL"
 
 
 def evalExpr(op1, op, op2):
@@ -135,11 +140,11 @@ def p_SourceFile(p):
     '''
     # TODO: Ignoring package name and Imports for now
     p[0] = p[5]
-    fname = filename.split(".")[0]
-    with open(f"{fname}_three_addr_code.txt", "w") as f:
-        for tac_line in p[0].TAC.code:
-            f.write(str(tac_line)+"\n")
-    SymbolTable.write_symbol_table(f"{fname}_symtab.txt")
+    p[0].TAC.print_code()
+    print("\n\nOPTMIZATION\n\n")
+    tac_optimized = optimize_tac.optimize_tac(SymbolTable, p[0].TAC)
+    tac_optimized.print_code()
+    SymbolTable.print_symbol_table()
     # parsed.append(p.slice)
 
 
@@ -254,6 +259,7 @@ def p_Statement(p):
                  | ContinueStmt
                  | GotoStmt
     '''
+    #print(p.slice)
     p[0] = p[1]
     p[0].name = 'Statement'
 
@@ -264,6 +270,8 @@ def p_Declaration(p):
                  | VarDecl
     '''
     parsed.append(p.slice)
+    p[0] = p[1]
+    p[0].name = 'Declaration'
 
 
 def p_ConstDecl(p):
@@ -399,17 +407,33 @@ def p_Type(p):
                  | LROUND IDENTIFIER RROUND
                  | LROUND Type RROUND
                  | LROUND IDENTIFIER DOT IDENTIFIER RROUND
+                 | empty
     '''
     parsed.append(p.slice)
+    if len(p) == 2:
+        #print("ADDED ", p[1])
+        p[0] = p[1]
+    else:
+        p[0] = p[2]
+    p[0].name = 'Type'
 
 
 def p_TypeLit(p):
     '''TypeLit : ArrayType
+                 | StandardType
                  | StructType
                  | FunctionType
     '''
+    p[0] = p[1]
     parsed.append(p.slice)
 
+def p_StandardType(p):
+    '''StandardType : PREDEF_TYPE
+    '''
+    parsed.append(p.slice) 
+    #print("PREDEF_TYPE", p[1])
+    p[0] = TreeNode('StandardTypes', p[1], 'NONE')
+    return
 
 def p_ArrayType(p):
     '''ArrayType : LSQUARE ArrayLength RSQUARE Type
@@ -532,24 +556,22 @@ def p_ParameterDecl(p):
 def p_VarDecl(p):
     '''VarDecl : VAR VarSpecTopList
     '''
-
-    p[0] = p[1]
+    parsed.append(p.slice)
+    p[0] = p[2]
     p[0].name = 'VarDecl'
     return
-    parsed.append(p.slice)
 
 
 def p_VarSpecTopList(p):
     '''VarSpecTopList : VarSpec
-                 | LROUND VarSpecList RROUND
+                      | LROUND VarSpecList RROUND
     '''
-
+    parsed.append(p.slice)
     if len(p) == 2:
         p[0] = p[1]
-        p[0].name = 'VarSpecTopList'
     else:
         p[0] = p[2]
-        # TODO
+    p[0].name = 'VarSpecTopList'
     return
 
 
@@ -562,21 +584,28 @@ def p_VarSpecList(p):
 
 
 def p_VarSpec(p):
-    '''VarSpec : IdentifierList Type VarSpecMid
-                | IDENTIFIER Type VarSpecMid
-
-                | IdentifierList IDENTIFIER VarSpecMid
-                | IDENTIFIER IDENTIFIER VarSpecMid
-
-                | IdentifierList IDENTIFIER DOT IDENTIFIER VarSpecMid
-                | IDENTIFIER IDENTIFIER DOT IDENTIFIER VarSpecMid
-
-                | IdentifierList EQ ExpressionList
-                | IDENTIFIER EQ ExpressionList
-                | IdentifierList EQ Expression
-                | IDENTIFIER EQ Expression
+    '''VarSpec : IDENTIFIER Type
+               | IDENTIFIER EQ Expression
+               | IDENTIFIER Type EQ Expression
+               | IdentifierList Type
+               | IdentifierList EQ ExpressionList
+               | IdentifierList Type EQ ExpressionList
     '''
-    parsed.append(p.slice)
+    # Insert into symbol table
+    p[0] = TreeNode('VarSpec', 0, 'NONE')
+    if hasattr(p[1], 'name') and  p[1].name == 'IdentifierList':
+        zero_val = TreeNode('decimal_lit', 0, 'INT')
+    else:
+        p[1] = TreeNode('IDENTIFIER',p[1],'INT',1)
+        if p[2].input_type != 'NONE':
+            node = symboltable_node()
+            node.name = p[1].data
+            node.value = None
+            node.scope = current_scope
+            node.type = p[1].input_type
+            SymbolTable.add_node(node)
+        p[0] = TreeNode('VarSpec',p[1].data,'INT')
+    return
 
 
 def p_VarSpecMid(p):
@@ -588,12 +617,15 @@ def p_VarSpecMid(p):
 
 
 def p_FunctionDecl(p):
-    '''FunctionDecl : FUNC FunctionName Signature
+    '''FunctionDecl : FUNC FunctionName Type Signature
+                | FUNC FunctionName Signature
+                | FUNC FunctionName Type Signature FunctionBody
                 | FUNC FunctionName Signature FunctionBody
     '''
     p[0] = TreeNode('FunctionDecl', 0, 'INT')
     p[0].TAC.add_line(['func', p[2].data, '', ''])
-    p[0].TAC.append_TAC(p[4].TAC)
+    if len(p) == 5:
+        p[0].TAC.append_TAC(p[4].TAC)
     # p[0].print_node()
     return
     # p[2].print_node()
@@ -928,10 +960,19 @@ def p_ForStmt(p):
 
 def p_ReturnStmt(p):
     '''ReturnStmt : RETURN
-                 | RETURN Expression
-                 | RETURN ExpressionList
+                  | RETURN Expression
+                  | RETURN ExpressionList
     '''
     parsed.append(p.slice)
+    if len(p) == 2:
+        p[0] = TreeNode('ReturnStmt', 0, 'None')
+        p[0].TAC.add_line(['return', '', '', ''])
+    if len(p) == 3:
+        if p[2].name == 'Expression':
+            p[0] = p[2]
+            p[0].name = 'ReturnStmt'
+            p[0].TAC.add_line(['return', p[2].data, '', ''])
+    return
 
 
 def p_BreakStmt(p):
@@ -978,20 +1019,27 @@ def p_Expression(p):
     if len(p) == 2:
         p[0] = p[1]
     elif len(p) == 4:
-        temp = tempGen()
-        node = symboltable_node()
-        node.name = temp
-        node.value = p[1].data + p[2] + p[3].data
-        node.type = p[1].input_type
-        node.scope = current_scope
-        SymbolTable.add_node(node)
-        print(f"Evaluating expression {node.value}")
-        node.value = evalExpr(p[1], p[2], p[3])
-        SymbolTable.print_symbol_table()
-        #print(node.value, node.name)
-        p[0] = TreeNode('IDENTIFIER', temp, 'INT', 1, [], p[1].TAC)
-        p[0].TAC.append_TAC(p[3].TAC)
-        p[0].TAC.add_line([p[2], p[0].data, p[1].data, p[3].data])
+        expression = p[1].data + p[2] + p[3].data
+        expr_node = SymbolTable.search_expr(expression)
+        if not expr_node:
+            temp = tempGen()
+            node = symboltable_node()
+            node.name = temp
+            node.value = p[1].data + p[2] + p[3].data
+            node.expr = p[1].data + p[2] + p[3].data
+            node.type = p[1].input_type
+            node.scope = current_scope
+            SymbolTable.add_node(node)
+            #print(f"Evaluating expression {node.value}")
+            node.value = evalExpr(p[1], p[2], p[3])
+            #SymbolTable.print_symbol_table()
+            #print(node.value, node.name)
+            p[0] = TreeNode('IDENTIFIER', temp, 'INT', 1, [], p[1].TAC)
+            node.exprnode = p[0]
+            p[0].TAC.append_TAC(p[3].TAC)
+            p[0].TAC.add_line([p[2], p[0].data, p[1].data, p[3].data])
+        else:
+            p[0] = expr_node.exprnode
     p[0].name = 'Expression'
     return
 
@@ -1213,7 +1261,7 @@ def p_string_lit(p):
 
 logging.basicConfig(
     level=logging.DEBUG,
-    filename="parselog.txt",
+    filename="logs/parselog.txt",
     filemode="w",
     format="%(filename)10s:%(lineno)4d:%(message)s"
 )
@@ -1230,4 +1278,4 @@ inp += "\n"
 
 
 yacc.parse(inp, debug=log)
-SymbolTable.print_symbol_table()
+#SymbolTable.print_symbol_table()

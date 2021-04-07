@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import ply.lex as lex
 import sys
@@ -107,7 +107,7 @@ tokens = list(reserved_keywords.values()) + [
     # 'UNDERSCORE'
     'NEWLINE',
     'IDENTIFIER',
-
+    'PREDEF_TYPE',
     'BREAK',
     'CONTINUE',
     'RETURN'
@@ -191,6 +191,10 @@ t_MODULO = r'\%'
 t_OR = r'\|'
 t_CARET = r'\^'
 
+def t_PREDEF_TYPE(t):
+    r'((int)|(float)|(char)|(string)|(bool))'
+    return t
+
 def t_HEX_LIT(t):
     r'0[x|X][0-9A-Fa-f]+'
     setSemiMode()
@@ -263,3 +267,7 @@ t = lexer.token()
 while t is not None:
     token_stream.append(t)
     t = lexer.token()
+'''
+for token in token_stream:
+    print(token)
+'''

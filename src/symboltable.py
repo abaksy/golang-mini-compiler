@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 class symboltable_node:
     """Defines a class Code which stores any piece of code line by line"""
 
@@ -7,6 +8,8 @@ class symboltable_node:
         self.type = ''
         self.scope = 0
         self.value = 0
+        self.expr = None
+        self.exprnode = None
     # def add_line(self, line):
     #     """Appends a line to the code"""
     #     self.code.append(line)
@@ -32,11 +35,11 @@ class SymbolTable:
     def print_symbol_table(self):
         """Prints the symbol table"""
         print('\nSYMBOL TABLE')
-        print("NAME  |  TYPE  |  SCOPE  |  VALUE\n------------------------------")
+        print("NAME  |  TYPE  |  SCOPE  |  VALUE  |  EXPR\n------------------------------")
         for i in range(len(self.symbol_table)):
             entry = self.symbol_table[i]
             print(entry.name, "\t", entry.type, "\t",
-                  entry.scope, "\t ", entry.value)
+                  entry.scope, "\t ", entry.value, "\t ", entry.expr)
             '''
             if entry.name.startswith("temp") or entry.name.startswith("label"):
                 pass
@@ -45,18 +48,22 @@ class SymbolTable:
             '''
 
     def add_node(self, symboltable_node):
+        name = symboltable_node.name
+        for st_node in self.symbol_table:
+            if st_node.name == name:
+                return False
         self.symbol_table.append(symboltable_node)
+        return True
 
     def search_node(self, name):
         for i in range(len(self.symbol_table)):
             if self.symbol_table[i].name == name:
                 return self.symbol_table[i]
         return []
-
-    def write_symbol_table(self, filename):
-        with open(filename, "w") as f:
-            for entry in self.symbol_table:
-                f.write(f"{entry.name},{entry.scope},{entry.type},{entry.value}\n")
-            
-
-
+    
+    def search_expr(self, expr):
+        for i in range(len(self.symbol_table)):
+            if self.symbol_table[i].expr == expr:
+                return self.symbol_table[i]
+        return []
+    

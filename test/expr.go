@@ -1,6 +1,7 @@
 package main
 
-func main(){
+func main()int{
+	var i int;
 	a:=10;
 	b:=20;
 	c:=30;
@@ -8,4 +9,9 @@ func main(){
 	a=a-b;
 	u=a-c;
 	u=a*b+c-u;
+	return u;
+	p:=100;
+	r:=150;
+	z:=0;
+	z = p+r;
 }
