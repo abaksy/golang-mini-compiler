@@ -35,11 +35,11 @@ class SymbolTable:
     def print_symbol_table(self):
         """Prints the symbol table"""
         print('\nSYMBOL TABLE')
-        print("NAME  |  TYPE  |  SCOPE  |  VALUE  |  EXPR\n------------------------------")
+        print("NAME  |  TYPE  |  SCOPE  |  VALUE  |  EXPR\n--------------------------------------------------")
         for i in range(len(self.symbol_table)):
             entry = self.symbol_table[i]
             print(entry.name, "\t", entry.type, "\t",
-                  entry.scope, "\t ", entry.value, "\t ", entry.expr)
+                  entry.scope, "\t ", entry.value, "\t   ", entry.expr)
             '''
             if entry.name.startswith("temp") or entry.name.startswith("label"):
                 pass

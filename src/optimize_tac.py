@@ -4,6 +4,7 @@ from code import ThreeAddressCode
 
 start = 0
 
+
 def block_label_gen():
     global start
     block_label = f"b{start}"
@@ -16,18 +17,18 @@ def basic_blocks(three_addr_code):
     labels = dict()
     basic_block = dict()
     label_block = dict()
-    #First Pass
+    # First Pass
     for idx, line in enumerate(three_addr_code.code):
         if line[0].startswith("label_") and len(line) == 1:
             labels[line[0]] = idx
-    #Second Pass
+    # Second Pass
     for idx, line in enumerate(three_addr_code.code):
         if line[0] == "goto":
-            leaders.append(labels.get(line[1]))   #Target of jump instruction   
-            leaders.append(idx+1)                 #Instr immediately after jump instruction
+            leaders.append(labels.get(line[1]))  # Target of jump instruction
+            leaders.append(idx+1)  # Instr immediately after jump instruction
         if line[0] in ["ifgotoeq", "ifgotoneq"]:
-            leaders.append(labels.get(line[-1]))  #Target of jump instruction
-            leaders.append(idx+1)                 #Instr immediately after jump instruction  
+            leaders.append(labels.get(line[-1]))  # Target of jump instruction
+            leaders.append(idx+1)  # Instr immediately after jump instruction
         if line[0] == "return":
             leaders.append(idx+1)
     leaders = list(set(leaders))
@@ -43,15 +44,15 @@ def basic_blocks(three_addr_code):
         code = basic_block[bl]
         for line in code:
             if len(line) == 1 and line[0].startswith("label_"):
-                    label_block[line[0]] = bl
+                label_block[line[0]] = bl
     return basic_block, label_block
-        
+
 
 def build_cfg(basic_block, label_block):
     for b in basic_block:
         print(b, basic_block[b])
     print("LABEL", label_block)
-    graph = {i:{j:0 for j in basic_block} for i in basic_block}
+    graph = {i: {j: 0 for j in basic_block} for i in basic_block}
     graph["b0"]["b0"] = 1
     for bl in basic_block:
         last_instr = basic_block[bl][-1]
@@ -68,12 +69,14 @@ def build_cfg(basic_block, label_block):
     for label in graph:
         print(label, graph[label])
 
+
 def get_all_stmt_lhs(three_addr_code, name):
     stmts = []
     for idx, line in enumerate(three_addr_code.code):
-        if line[1] == name:
+        if len(line) == 4 and line[1] == name:
             stmts.append(idx)
     return stmts
+
 
 def get_all_assignments(three_addr_code, name):
     stmts = []
@@ -81,6 +84,7 @@ def get_all_assignments(three_addr_code, name):
         if line[0] in ['=', ':='] and line[2] == name and line[-1] == '':
             stmts.append(idx)
     return stmts
+
 
 def pack_temps(symbol_table, three_addr_code):
     '''
@@ -102,8 +106,10 @@ def pack_temps(symbol_table, three_addr_code):
             #print("COULD NOT PACK", stmts, assignments)
             continue
     n = len(three_addr_code.code)
-    three_addr_code.code = [three_addr_code.code[i] for i in range(n) if i not in remove]
+    three_addr_code.code = [three_addr_code.code[i]
+                            for i in range(n) if i not in remove]
     return three_addr_code
+
 
 def common_subexpr_eliminate(three_addr_code):
     '''
@@ -121,15 +127,29 @@ def common_subexpr_eliminate(three_addr_code):
     three_addr_code.code = [c[i] for i in range(len(c)) if i not in to_remove]
     return three_addr_code
 
+
+def constant_folding(three_addr_code: ThreeAddressCode, symbol_table: SymbolTable):
+    to_remove = list()
+    for idx, line in enumerate(three_addr_code.code):
+        if len(line) == 4:
+            node1 = symbol_table.search_node(line[2])
+            node2 = symbol_table.search_node(line[3])
+            if node1:
+                three_addr_code.code[idx][2] = node1.value
+                to_remove += get_all_stmt_lhs(three_addr_code, node1.name)
+            if node2:
+                three_addr_code.code[idx][3] = node2.value
+                to_remove += get_all_stmt_lhs(three_addr_code, node2.name)
+    three_addr_code.code = [three_addr_code.code[i] for i in range(
+        len(three_addr_code.code)) if i not in to_remove]
+    return three_addr_code
+
+
 def optimize_tac(symbol_table, three_addr_code):
     '''
-    three_addr_code = pack_temps(symbol_table,three_addr_code)
-    #three_addr_code.print_code()
-    basic_block, label_block = basic_blocks(three_addr_code)
-    build_cfg(basic_block, label_block)
+    Function that performs optimizations on TAC
     '''
     three_addr_code = common_subexpr_eliminate(three_addr_code)
+    three_addr_code = constant_folding(three_addr_code, symbol_table)
     #three_addr_code = pack_temps(symbol_table, three_addr_code)
     return three_addr_code
-    
-
