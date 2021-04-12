@@ -1239,14 +1239,6 @@ def p_Arguments(p):
         p[0] = TreeNode('Arguments', 0, 'INT')
     return
 
-
-def p_error(p):
-    if p == None:
-        print(str(sys.argv[1]) + " :: You missed something at the end")
-    else:
-        print(f"SYNTAX ERROR on line number {p.lineno - numLines + 1}")
-
-
 def p_empty(p):
     'empty :'
     pass
@@ -1257,6 +1249,13 @@ def p_string_lit(p):
     '''
     p[0] = TreeNode('string_lit', p[1], 'STRING')
     return
+
+
+def p_error(p):
+    if p == None:
+        print(str(sys.argv[1]) + " :: You missed something at the end")
+    else:
+        print(f"SYNTAX ERROR on line number {p.lineno - numLines + 1}")
 
 
 logging.basicConfig(
