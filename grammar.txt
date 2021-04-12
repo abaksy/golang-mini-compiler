@@ -70,21 +70,6 @@ ExpressionList : Expression COMMA ExpressionBotList
 ExpressionBotList : Expression COMMA ExpressionBotList
                          | Expression
     
-TypeDecl : TYPE TypeSpecTopList
-    
-TypeSpecTopList : TypeSpec
-                       | LROUND TypeSpecList RROUND
-    
-TypeSpecList : empty
-                    | TypeSpecList TypeSpec SEMICOLON
-    
-TypeSpec : AliasDecl
-                | TypeDef
-    
-AliasDecl : IDENTIFIER EQ Type
-    
-TypeDef : IDENTIFIER Type
-    
 Type : StandardTypes
         | LROUND Type RROUND
     
