@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Using argument expansion to capture all files provided as arguments.
-
-
 if [[ ! -d logs ]]
 then
     echo "Creating directory for log files.."
