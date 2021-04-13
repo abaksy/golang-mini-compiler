@@ -183,7 +183,7 @@ t_OR = r'\|'
 t_CARET = r'\^'
 
 def t_invalidIdent(t):
-    r'[0-9][a-zA-Z0-9_]*'
+    r'[0-9][a-zA-Z_]+'
     print(f"LEXICAL ERROR: Invalid Identifier '{t.value}' on line {t.lexer.lineno}")
     sys.exit(-1)
 
@@ -274,7 +274,7 @@ t = lexer.token()
 while t is not None:
     token_stream.append(t)
     t = lexer.token()
-
+'''
 for token in token_stream:
     print(token)
-
+'''
