@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [[ ! -d logs ]]
+if [ ! -d logs ]
 then
     echo "Creating directory for log files.."
     mkdir logs
