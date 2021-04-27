@@ -140,12 +140,12 @@ def p_SourceFile(p):
     '''
     # TODO: Ignoring package name and Imports for now
     p[0] = p[5]
+    print("Code length: ", len(p[0].TAC.code))
     p[0].TAC.print_code()
     print("\n\nOPTMIZATION\n\n")
     tac_optimized = optimize_tac.optimize_tac(SymbolTable, p[0].TAC)
-    tac_optimized.print_code()
+    print("\nSYMBOL TABLE:")
     SymbolTable.print_symbol_table()
-    # parsed.append(p.slice)
 
 
 def p_ImportDeclList(p):
