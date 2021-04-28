@@ -11,7 +11,7 @@ def setSemiMode():
     if input_code[lexer.lexpos] == '\n':
         semimode = True
 
-# The following are the list of kwywords which are reserved in GoLang
+# The following are the list of keywords which are reserved in GoLang
 reserved_keywords = {
     'nil'      : 'NIL',
     'default'  : 'DEFAULT',
